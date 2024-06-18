@@ -1,21 +1,28 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+
+namespace SistemaSeguridad
+{
 namespace SistemaSeguridad
 {
     public class ProcesadorImagen
     {
         private readonly string _imageDirectory;
         private readonly string _storageDirectory;
+        private readonly int _networkLatency;
         private static Random random = new Random();
 
-        public ProcesadorImagen(string imageDirectory, string storageDirectory)
+        public ProcesadorImagen(string imageDirectory, string storageDirectory, int networkLatency)
         {
             _imageDirectory = imageDirectory;
             _storageDirectory = storageDirectory;
-            Directory.CreateDirectory(_storageDirectory);  // Asegurarnos de que el directorio de almacenamiento exista
+            _networkLatency = networkLatency;
+            Directory.CreateDirectory(_storageDirectory); 
         }
 
         public async Task StartProcessing(CancellationToken token)
@@ -27,6 +34,9 @@ namespace SistemaSeguridad
                 foreach (string imagePath in imagePaths)
                 {
                     Log($"Procesando imagen: {Path.GetFileNameWithoutExtension(imagePath)}");
+
+                    // Simular latencia de red
+                    await Task.Delay(_networkLatency);
 
                     // Mover la imagen al directorio de almacenamiento
                     string processedPath = Path.Combine(_storageDirectory, Path.GetFileName(imagePath));
@@ -45,4 +55,6 @@ namespace SistemaSeguridad
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [Procesamiento] {message}");
         }
     }
+}
+
 }

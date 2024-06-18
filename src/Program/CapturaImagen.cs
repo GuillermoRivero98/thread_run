@@ -5,15 +5,21 @@ using System.Threading.Tasks;
 
 namespace SistemaSeguridad
 {
+namespace SistemaSeguridad
+{
     public class CapturaImagen
     {
         private readonly string _imageDirectory;
+        private readonly (int width, int height) _resolution;
+        private readonly int _captureFrequency;
         private static Random random = new Random();
 
-        public CapturaImagen(string imageDirectory)
+        public CapturaImagen(string imageDirectory, (int width, int height) resolution, int captureFrequency)
         {
             _imageDirectory = imageDirectory;
-            Directory.CreateDirectory(_imageDirectory);  // Asegurarnos de que el directorio exista
+            _resolution = resolution;
+            _captureFrequency = captureFrequency;
+            Directory.CreateDirectory(_imageDirectory);
         }
 
         public async Task StartCapturing(CancellationToken token)
@@ -23,7 +29,7 @@ namespace SistemaSeguridad
                 if (await UserWantsToCaptureImageAsync(token))
                 {
                     string imageId = Guid.NewGuid().ToString();
-                    string imagePath = Path.Combine(_imageDirectory, $"imagen_{imageId}.jpg");
+                    string imagePath = Path.Combine(_imageDirectory, $"imagen_{imageId}_{_resolution.width}x{_resolution.height}.jpg");
 
                     if (!File.Exists(imagePath))
                     {
@@ -41,7 +47,7 @@ namespace SistemaSeguridad
                     Log("El administrador ha decidido no capturar una nueva imagen.");
                 }
 
-                await Task.Delay(random.Next(500, 2000));
+                await Task.Delay(_captureFrequency * 1000);
             }
         }
 
@@ -57,4 +63,6 @@ namespace SistemaSeguridad
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [Captura] {message}");
         }
     }
+}
+
 }

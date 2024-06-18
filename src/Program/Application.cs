@@ -6,20 +6,20 @@ using System.Collections.Generic;
 
 namespace SistemaSeguridad
 {
+namespace SistemaSeguridad
+{
     class Application : IDisposable
     {
         private readonly string imageDirectory = "NuevasImagenes";
         private readonly string storageDirectory = "ArchivosProcesados";
         private readonly int maxProcessedFiles = 50;
-
+        private readonly SimulationConfig config;
         private readonly Random random = new Random();
 
-        // Colas multinivel para priorizar tareas
         private readonly Queue<Func<Task>> highPriorityQueue = new Queue<Func<Task>>();
         private readonly Queue<Func<Task>> mediumPriorityQueue = new Queue<Func<Task>>();
         private readonly Queue<Func<Task>> lowPriorityQueue = new Queue<Func<Task>>();
 
-        // Semáforos para controlar el acceso a recursos compartidos
         private readonly SemaphoreSlim semaphoreImageCapture = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim semaphoreImageProcess = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim semaphoreDataStorage = new SemaphoreSlim(1, 1);
@@ -28,24 +28,27 @@ namespace SistemaSeguridad
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
+        public Application(SimulationConfig config)
+        {
+            this.config = config;
+        }
+
         public async Task Run()
         {
+            config.DisplayConfig();
             Directory.CreateDirectory(imageDirectory);
             Directory.CreateDirectory(storageDirectory);
 
-            // Encolado de tareas con prioridades
             EnqueueHighPriorityTask(() => Task.Run(() => new ControlAcceso().ControlarAccesoYCapturarImagen()));
-            EnqueueHighPriorityTask(() => new CapturaImagen(imageDirectory).StartCapturing(cts.Token));
-            EnqueueHighPriorityTask(() => new ProcesadorImagen(imageDirectory, storageDirectory).StartProcessing(cts.Token));
+            EnqueueHighPriorityTask(() => new CapturaImagen(imageDirectory, config.ImageResolution, config.CaptureFrequency).StartCapturing(cts.Token));
+            EnqueueHighPriorityTask(() => new ProcesadorImagen(imageDirectory, storageDirectory, config.NetworkLatency).StartProcessing(cts.Token));
 
             EnqueueMediumPriorityTask(() => new MonitoreoTiempoReal().StartMonitoring(cts.Token));
 
             EnqueueLowPriorityTask(() => new AlmacenamientoDatos(storageDirectory, maxProcessedFiles).StartStoring(cts.Token));
 
-            // Temporizador para cancelar tareas después de 10 segundos
             Timer timer = new Timer(_ => cts.Cancel(), null, 10000, Timeout.Infinite);
 
-            // Ejecución de tareas según su prioridad
             await ExecuteTasks(highPriorityQueue);
             await ExecuteTasks(mediumPriorityQueue);
             await ExecuteTasks(lowPriorityQueue);
@@ -55,8 +58,8 @@ namespace SistemaSeguridad
 
         private string GetRandomTime()
         {
-            int minutes = random.Next(0, 60);  // Genera minutos entre 0 y 59
-            int seconds = random.Next(0, 60);  // Genera segundos entre 0 y 59
+            int minutes = random.Next(0, 60);
+            int seconds = random.Next(0, 60);
             return $"{minutes} minutos y {seconds} segundos";
         }
 
@@ -107,4 +110,6 @@ namespace SistemaSeguridad
             cts.Dispose();
         }
     }
+}
+
 }
