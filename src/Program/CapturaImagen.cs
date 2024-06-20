@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 
 namespace SistemaSeguridad
 {
-namespace SistemaSeguridad
-{
     public class CapturaImagen
     {
         private readonly string _imageDirectory;
@@ -65,4 +63,3 @@ namespace SistemaSeguridad
     }
 }
 
-}

@@ -1,11 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
-namespace SistemaSeguridad
-{
 namespace SistemaSeguridad
 {
     class Application : IDisposable
@@ -39,13 +37,34 @@ namespace SistemaSeguridad
             Directory.CreateDirectory(imageDirectory);
             Directory.CreateDirectory(storageDirectory);
 
-            EnqueueHighPriorityTask(() => Task.Run(() => new ControlAcceso().ControlarAccesoYCapturarImagen()));
-            EnqueueHighPriorityTask(() => new CapturaImagen(imageDirectory, config.ImageResolution, config.CaptureFrequency).StartCapturing(cts.Token));
-            EnqueueHighPriorityTask(() => new ProcesadorImagen(imageDirectory, storageDirectory, config.NetworkLatency).StartProcessing(cts.Token));
+            EnqueueHighPriorityTask(
+                () => Task.Run(() => new ControlAcceso().ControlarAccesoYCapturarImagen())
+            );
+            EnqueueHighPriorityTask(
+                () =>
+                    new CapturaImagen(
+                        imageDirectory,
+                        config.ImageResolution,
+                        config.CaptureFrequency
+                    ).StartCapturing(cts.Token)
+            );
+            EnqueueHighPriorityTask(
+                () =>
+                    new ProcesadorImagen(
+                        imageDirectory,
+                        storageDirectory,
+                        config.NetworkLatency
+                    ).StartProcessing(cts.Token)
+            );
 
             EnqueueMediumPriorityTask(() => new MonitoreoTiempoReal().StartMonitoring(cts.Token));
 
-            EnqueueLowPriorityTask(() => new AlmacenamientoDatos(storageDirectory, maxProcessedFiles).StartStoring(cts.Token));
+            EnqueueLowPriorityTask(
+                () =>
+                    new AlmacenamientoDatos(storageDirectory, maxProcessedFiles).StartStoring(
+                        cts.Token
+                    )
+            );
 
             Timer timer = new Timer(_ => cts.Cancel(), null, 10000, Timeout.Infinite);
 
@@ -53,7 +72,9 @@ namespace SistemaSeguridad
             await ExecuteTasks(mediumPriorityQueue);
             await ExecuteTasks(lowPriorityQueue);
 
-            Console.WriteLine($"Todos los procesos han terminado. Tiempo transcurrido: {GetRandomTime()}");
+            Console.WriteLine(
+                $"Todos los procesos han terminado. Tiempo transcurrido: {GetRandomTime()}"
+            );
         }
 
         private string GetRandomTime()
@@ -110,6 +131,4 @@ namespace SistemaSeguridad
             cts.Dispose();
         }
     }
-}
-
 }

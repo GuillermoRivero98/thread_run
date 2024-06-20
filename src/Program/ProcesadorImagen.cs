@@ -5,9 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-
-namespace SistemaSeguridad
-{
 namespace SistemaSeguridad
 {
     public class ProcesadorImagen
@@ -22,7 +19,7 @@ namespace SistemaSeguridad
             _imageDirectory = imageDirectory;
             _storageDirectory = storageDirectory;
             _networkLatency = networkLatency;
-            Directory.CreateDirectory(_storageDirectory); 
+            Directory.CreateDirectory(_storageDirectory);
         }
 
         public async Task StartProcessing(CancellationToken token)
@@ -39,7 +36,10 @@ namespace SistemaSeguridad
                     await Task.Delay(_networkLatency);
 
                     // Mover la imagen al directorio de almacenamiento
-                    string processedPath = Path.Combine(_storageDirectory, Path.GetFileName(imagePath));
+                    string processedPath = Path.Combine(
+                        _storageDirectory,
+                        Path.GetFileName(imagePath)
+                    );
                     File.Move(imagePath, processedPath);
                     Log($"Imagen movida a: {processedPath}");
 
@@ -55,6 +55,4 @@ namespace SistemaSeguridad
             Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [Procesamiento] {message}");
         }
     }
-}
-
 }
