@@ -3,28 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using SecuritySystem;
 
 namespace SistemaSeguridad
 {
-    class Application : IDisposable
+    public class Application : IDisposable
     {
-        private readonly string imageDirectory = "NuevasImagenes";
-        private readonly string storageDirectory = "ArchivosProcesados";
-        private readonly int maxProcessedFiles = 50;
         private readonly SimulationConfig config;
-        private readonly Random random = new Random();
-
+        private readonly string imageDirectory = "imagenes";
+        private readonly string storageDirectory = "almacenamiento";
+        private readonly int maxProcessedFiles = 100;
+        private readonly SemaphoreSlim semaphoreImageCapture = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim semaphoreRealTimeMonitor = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim semaphoreDataStorage = new SemaphoreSlim(1, 1);
         private readonly Queue<Func<Task>> highPriorityQueue = new Queue<Func<Task>>();
         private readonly Queue<Func<Task>> mediumPriorityQueue = new Queue<Func<Task>>();
         private readonly Queue<Func<Task>> lowPriorityQueue = new Queue<Func<Task>>();
-
-        private readonly SemaphoreSlim semaphoreImageCapture = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreSlim semaphoreImageProcess = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreSlim semaphoreDataStorage = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreSlim semaphoreRealTimeMonitor = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreSlim semaphoreAccessControl = new SemaphoreSlim(1, 1);
-
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
         public Application(SimulationConfig config)
@@ -59,11 +52,11 @@ namespace SistemaSeguridad
             );
             EnqueueMediumPriorityTask(
                 () =>
-                    new Monitoring().StartMonitoring(cts.Token)
+                    new Monitoreo().IniciarMonitoreo(cts.Token)  // Aquí se usa la clase Monitoreo
             );
             EnqueueLowPriorityTask(
                 () =>
-                    new DataStorage(storageDirectory, maxProcessedFiles).StartStoring(cts.Token)
+                    new AlmacenamientoDatos(storageDirectory, maxProcessedFiles).IniciarAlmacenamiento(cts.Token)
             );
 
             var highPriorityTask = ProcessQueueAsync(highPriorityQueue, semaphoreImageCapture, cts.Token);
@@ -90,11 +83,19 @@ namespace SistemaSeguridad
 
         private async Task ProcessQueueAsync(Queue<Func<Task>> queue, SemaphoreSlim semaphore, CancellationToken token)
         {
-            while (!token.IsCancellationRequested && queue.Count > 0)
+            while (!token.IsCancellationRequested)
             {
-                var task = queue.Dequeue();
-                await semaphore.WaitAsync(token);
+                Func<Task> task;
 
+                lock (queue)
+                {
+                    if (queue.Count == 0)
+                        break;
+
+                    task = queue.Dequeue();
+                }
+
+                await semaphore.WaitAsync(token);
                 try
                 {
                     await task();
@@ -110,6 +111,9 @@ namespace SistemaSeguridad
         {
             cts.Cancel();
             cts.Dispose();
+            semaphoreImageCapture.Dispose();
+            semaphoreRealTimeMonitor.Dispose();
+            semaphoreDataStorage.Dispose();
         }
     }
 }

@@ -18,7 +18,7 @@ namespace SistemaSeguridad
             Directory.CreateDirectory(_storageDirectory);  // Asegurarnos de que el directorio de almacenamiento exista
         }
 
-        public async Task StartStoring(CancellationToken token)
+        public async Task IniciarAlmacenamiento(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
@@ -31,15 +31,20 @@ namespace SistemaSeguridad
                     Log($"Archivo más antiguo eliminado. Nuevo tamaño de almacenamiento: {processedFiles.Length - 1}");
                 }
 
+                string outputFilePath = Path.Combine(_storageDirectory, $"procesada_{DateTime.Now:yyyyMMddHHmmss}.jpg.txt");
+                string imageData = "Datos procesados de la imagen";
+                await File.WriteAllTextAsync(outputFilePath, imageData);
+                Log($"Datos almacenados en: {outputFilePath}");
+
                 await Task.Delay(random.Next(2800, 3200));
             }
 
             Log("Almacenamiento de datos terminado.");
         }
 
-        private void Log(string message)
+        private void Log(string mensaje)
         {
-            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [Almacenamiento] {message}");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [Almacenamiento] {mensaje}");
         }
     }
 }

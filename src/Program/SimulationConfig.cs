@@ -1,7 +1,4 @@
 using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SistemaSeguridad
 {
@@ -31,15 +28,15 @@ namespace SistemaSeguridad
 
         public void DisplayConfig()
         {
-            Console.WriteLine($"Simulation Configuration:\n" +
-                              $"Number of Cameras: {NumCameras}\n" +
-                              $"Image Resolution: {ImageResolution}\n" +
-                              $"Capture Frequency: {CaptureFrequency} seconds\n" +
-                              $"Traffic Level: {TrafficLevel}\n" +
-                              $"CPU Allocation: {CPUAllocation} cores\n" +
-                              $"RAM Allocation: {RAMAllocation} GB\n" +
-                              $"Network Latency: {NetworkLatency} ms\n" +
-                              $"Network Bandwidth: {NetworkBandwidth} Mbps\n");
+            Console.WriteLine($"Configuración de Simulación:\n" +
+                              $"Número de Cámaras: {NumCameras}\n" +
+                              $"Resolución de Imagen: {ImageResolution}\n" +
+                              $"Frecuencia de Captura: {CaptureFrequency} segundos\n" +
+                              $"Nivel de Tráfico: {TrafficLevel}\n" +
+                              $"Asignación de CPU: {CPUAllocation} núcleos\n" +
+                              $"Asignación de RAM: {RAMAllocation} GB\n" +
+                              $"Latencia de Red: {NetworkLatency} ms\n" +
+                              $"Ancho de Banda de Red: {NetworkBandwidth} Mbps\n");
         }
     }
 }
