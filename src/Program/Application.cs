@@ -56,78 +56,58 @@ namespace SistemaSeguridad
                         config.NetworkLatency
                     ).StartProcessing(cts.Token)
             );
-
-            EnqueueMediumPriorityTask(() => new MonitoreoTiempoReal().StartMonitoring(cts.Token));
-
+            EnqueueMediumPriorityTask(
+                () =>
+                    new Monitoring().StartMonitoring(cts.Token)
+            );
             EnqueueLowPriorityTask(
                 () =>
-                    new AlmacenamientoDatos(storageDirectory, maxProcessedFiles).StartStoring(
-                        cts.Token
-                    )
+                    new DataStorage(storageDirectory, maxProcessedFiles).StartStoring(cts.Token)
             );
 
-            Timer timer = new Timer(_ => cts.Cancel(), null, 10000, Timeout.Infinite);
+            var highPriorityTask = ProcessQueueAsync(highPriorityQueue, semaphoreImageCapture, cts.Token);
+            var mediumPriorityTask = ProcessQueueAsync(mediumPriorityQueue, semaphoreRealTimeMonitor, cts.Token);
+            var lowPriorityTask = ProcessQueueAsync(lowPriorityQueue, semaphoreDataStorage, cts.Token);
 
-            await ExecuteTasks(highPriorityQueue);
-            await ExecuteTasks(mediumPriorityQueue);
-            await ExecuteTasks(lowPriorityQueue);
-
-            Console.WriteLine(
-                $"Todos los procesos han terminado. Tiempo transcurrido: {GetRandomTime()}"
-            );
-        }
-
-        private string GetRandomTime()
-        {
-            int minutes = random.Next(0, 60);
-            int seconds = random.Next(0, 60);
-            return $"{minutes} minutos y {seconds} segundos";
+            await Task.WhenAll(highPriorityTask, mediumPriorityTask, lowPriorityTask);
         }
 
         private void EnqueueHighPriorityTask(Func<Task> task)
         {
-            lock (highPriorityQueue)
-            {
-                highPriorityQueue.Enqueue(task);
-            }
+            highPriorityQueue.Enqueue(task);
         }
 
         private void EnqueueMediumPriorityTask(Func<Task> task)
         {
-            lock (mediumPriorityQueue)
-            {
-                mediumPriorityQueue.Enqueue(task);
-            }
+            mediumPriorityQueue.Enqueue(task);
         }
 
         private void EnqueueLowPriorityTask(Func<Task> task)
         {
-            lock (lowPriorityQueue)
-            {
-                lowPriorityQueue.Enqueue(task);
-            }
+            lowPriorityQueue.Enqueue(task);
         }
 
-        private async Task ExecuteTasks(Queue<Func<Task>> queue)
+        private async Task ProcessQueueAsync(Queue<Func<Task>> queue, SemaphoreSlim semaphore, CancellationToken token)
         {
-            while (queue.Count > 0)
+            while (!token.IsCancellationRequested && queue.Count > 0)
             {
-                Func<Task>? task = null;
+                var task = queue.Dequeue();
+                await semaphore.WaitAsync(token);
 
-                lock (queue)
-                {
-                    task = queue.Dequeue();
-                }
-
-                if (task != null)
+                try
                 {
                     await task();
+                }
+                finally
+                {
+                    semaphore.Release();
                 }
             }
         }
 
         public void Dispose()
         {
+            cts.Cancel();
             cts.Dispose();
         }
     }

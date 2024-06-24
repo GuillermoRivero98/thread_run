@@ -24,34 +24,17 @@ namespace SistemaSeguridad
             {
                 string[] processedFiles = Directory.GetFiles(_storageDirectory);
 
-                if (processedFiles.Length > _maxProcessedFiles)
+                if (processedFiles.Length >= _maxProcessedFiles)
                 {
-                    foreach (string filePath in processedFiles)
-                    {
-                        Log($"Almacenando archivo: {Path.GetFileName(filePath)}");
-
-                        // Simular la operación de almacenamiento
-                        await Task.Delay(random.Next(1000, 2000));
-
-                        // Eliminar el archivo después de "almacenarlo"
-                        File.Delete(filePath);
-                        Log($"Archivo almacenado y eliminado: {filePath}");
-
-                        if (!token.IsCancellationRequested)
-                        {
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    Log("No hay suficientes archivos procesados para almacenar.");
+                    Array.Sort(processedFiles, (a, b) => File.GetCreationTime(a).CompareTo(File.GetCreationTime(b)));
+                    File.Delete(processedFiles[0]);
+                    Log($"Archivo más antiguo eliminado. Nuevo tamaño de almacenamiento: {processedFiles.Length - 1}");
                 }
 
-                await Task.Delay(5000);  // Esperar antes de la siguiente verificación
+                await Task.Delay(random.Next(2800, 3200));
             }
 
-            Log("Proceso de almacenamiento de datos terminado.");
+            Log("Almacenamiento de datos terminado.");
         }
 
         private void Log(string message)

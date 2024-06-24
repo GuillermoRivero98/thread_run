@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,50 +7,49 @@ namespace SistemaSeguridad
 {
     public class ProcesadorImagen
     {
-        private readonly string _imageDirectory;
-        private readonly string _storageDirectory;
+        private readonly string _inputDirectory;
+        private readonly string _outputDirectory;
         private readonly int _networkLatency;
         private static Random random = new Random();
 
-        public ProcesadorImagen(string imageDirectory, string storageDirectory, int networkLatency)
+        public ProcesadorImagen(string inputDirectory, string outputDirectory, int networkLatency)
         {
-            _imageDirectory = imageDirectory;
-            _storageDirectory = storageDirectory;
+            _inputDirectory = inputDirectory;
+            _outputDirectory = outputDirectory;
             _networkLatency = networkLatency;
-            Directory.CreateDirectory(_storageDirectory);
+            Directory.CreateDirectory(_outputDirectory);  // Asegurarnos de que el directorio de salida exista
         }
 
         public async Task StartProcessing(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                string[] imagePaths = Directory.GetFiles(_imageDirectory);
+                string[] inputFiles = Directory.GetFiles(_inputDirectory, "*.jpg");
 
-                foreach (string imagePath in imagePaths)
+                if (inputFiles.Length > 0)
                 {
-                    Log($"Procesando imagen: {Path.GetFileNameWithoutExtension(imagePath)}");
+                    string inputFile = inputFiles[random.Next(inputFiles.Length)];
+                    string outputFile = Path.Combine(_outputDirectory, Path.GetFileName(inputFile) + ".txt");
 
-                    // Simular latencia de red
-                    await Task.Delay(_networkLatency);
+                    Log($"Procesando imagen: {inputFile}");
+                    await Task.Delay(_networkLatency); // Simular latencia de red
 
-                    // Mover la imagen al directorio de almacenamiento
-                    string processedPath = Path.Combine(
-                        _storageDirectory,
-                        Path.GetFileName(imagePath)
-                    );
-                    File.Move(imagePath, processedPath);
-                    Log($"Imagen movida a: {processedPath}");
+                    // Simulación de procesamiento de la imagen
+                    await File.WriteAllTextAsync(outputFile, $"Procesada: {inputFile}");
 
-                    await Task.Delay(random.Next(1000, 3000));
+                    Log($"Imagen procesada y guardada en: {outputFile}");
+                    File.Delete(inputFile); // Eliminar la imagen original después de procesarla
                 }
 
-                await Task.Delay(3000);
+                await Task.Delay(random.Next(2300, 2700));
             }
+
+            Log("Procesamiento de imágenes terminado.");
         }
 
         private void Log(string message)
         {
-            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [Procesamiento] {message}");
+            Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [Procesador] {message}");
         }
     }
 }

@@ -13,6 +13,13 @@ namespace SistemaSeguridad
             while (!token.IsCancellationRequested)
             {
                 Log("Monitoreando en tiempo real...");
+
+                // Simulación de eventos en tiempo real
+                if (random.NextDouble() < 0.1)
+                {
+                    Log("Alerta: Evento sospechoso detectado!");
+                }
+
                 await Task.Delay(random.Next(2300, 2700));
             }
 

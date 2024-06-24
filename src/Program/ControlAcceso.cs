@@ -1,16 +1,17 @@
 using System;
+using System.Threading.Tasks;
 
 namespace SistemaSeguridad
 {
     public class ControlAcceso
     {
         // Método para controlar el acceso y la captura de imágenes
-        public void ControlarAccesoYCapturarImagen()
+        public async Task ControlarAccesoYCapturarImagen()
         {
             Console.WriteLine($"{DateTime.Now} [ControlAcceso] Controlando acceso...");
 
             // Simular control de acceso y otras operaciones
-            System.Threading.Thread.Sleep(2000); // Ejemplo: Simular tiempo de procesamiento
+            await Task.Delay(2000); // Ejemplo: Simular tiempo de procesamiento
 
             // Preguntar al usuario si desea capturar una nueva imagen
             Console.Write("Nuevo rostro reconocido ¿Desea capturar esta nueva imagen? (S/N): ");
@@ -18,7 +19,7 @@ namespace SistemaSeguridad
 
             if (respuesta == "S")
             {
-                CapturarNuevaImagen();
+                await CapturarNuevaImagen();
             }
             else if (respuesta == "N")
             {
@@ -33,14 +34,14 @@ namespace SistemaSeguridad
         }
 
         // Método para capturar una nueva imagen
-        private void CapturarNuevaImagen()
+        private async Task CapturarNuevaImagen()
         {
             string nombreImagen = Guid.NewGuid().ToString(); // Generar nombre único
             Console.WriteLine($"{DateTime.Now} [ControlAcceso] Capturando nueva imagen: {nombreImagen}");
 
             // Aquí iría la lógica real para capturar la imagen y guardarla
             // Simulación de guardar imagen
-            System.Threading.Thread.Sleep(2000); // Ejemplo: Simular tiempo de captura y guardado
+            await Task.Delay(2000); // Ejemplo: Simular tiempo de captura y guardado
 
             Console.WriteLine($"{DateTime.Now} [ControlAcceso] Rostro identificado y guardado en: /ruta/de/imagen/{nombreImagen}.jpg");
         }
